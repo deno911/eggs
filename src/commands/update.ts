@@ -136,7 +136,7 @@ export async function update(
       await fetch(url.replace(/^.*?["']([^'"]+)['"].*?$/ig, "$1")).then(r => r.ok).catch(() => false);
 
     if (!(await check(newURL))) {
-      const newURL2 = newURL.replace(dependency.latestRelease, `v${dependency.latestRelease}`);
+      const newURL2 = newURL.replace(dependency.latestRelease, `v${dependency.latestRelease.replace(/^v/i, '')}`);
       if ((await check(newURL2))) {
         newURL = newURL2;
       } else {
@@ -158,11 +158,6 @@ export async function update(
 
   log.info("Updated your dependencies!");
 }
-
-export type Id<T> =
-  T extends infer U extends Record<string, unknown>
-    ? { [K in keyof U]: Id<U[K]> }
-  : T;
 
 export interface Options extends DefaultOptions, Record<string, unknown> {
   file: string;
