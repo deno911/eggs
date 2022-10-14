@@ -6,6 +6,7 @@ import {
   parseURL,
   semver,
   yellow,
+  versionSubstitute,
 } from "../../deps.ts";
 import { version } from "../version.ts";
 import type { DefaultOptions } from "../commands.ts";
@@ -22,8 +23,12 @@ const decoder = new TextDecoder("utf-8");
 
 export async function update(
   options: Options,
-  requestedModules: string[],
+  deps: Record<string, unknown> | string[] = [],
 ): Promise<void> {
+  const requestedModules = (
+    Array.isArray(deps) ? deps : Object.values(deps ?? {})
+  ) ?? [];
+
   await setupLog(options.debug);
 
   log.debug("Options: ", options);
@@ -40,14 +45,23 @@ export async function update(
     return;
   }
 
+  const doubleCheck = confirm(`This will overwrite existing versions in ${pathToDepFile.split('/').at(-1)}. Should we proceed?`);
+
+  if (!doubleCheck) {
+    log.warning(
+      "Aborted the dependency update process."
+    );
+    return;
+  }
+
   /** Creates an array of strings from each line inside the dependency file.
    * Only extracts lines that contain "https://" to strip out non-import lines. */
   const dependencyFileContents: string[] = decoder
     .decode(Deno.readFileSync(pathToDepFile))
-    .split("\n")
+    .split(/[\r\n]/)
     .filter((line) => line.indexOf("https://") > 0);
 
-  if (dependencyFileContents.length === 0) {
+  if (dependencyFileContents?.length === 0) {
     log.warning(
       "Your dependency file does not contain any imported modules.",
     );
@@ -69,7 +83,7 @@ export async function update(
 
     // Now we have the name, ignore dependency if requested dependencies are set and it isn't one requested
     if (
-      requestedModules.length && requestedModules.indexOf(name) === -1
+      requestedModules?.length && requestedModules?.indexOf(name) === -1
     ) {
       log.debug(name, "was not requested.");
       continue;
@@ -92,7 +106,7 @@ export async function update(
       continue;
     }
 
-    if (semver.eq(version, latestRelease)) {
+    if (semver.gte(version, latestRelease)) {
       log.debug(name, "is already up to date!");
       continue;
     }
@@ -115,12 +129,26 @@ export async function update(
 
   // Loop through the users dependency file, replacing the imported version with the latest release for each dep
   let dependencyFile = decoder.decode(Deno.readFileSync(pathToDepFile));
-  dependenciesToUpdate.forEach((dependency) => {
+
+  for await (const dependency of dependenciesToUpdate) {
+    let newURL = dependency.versionURL.replace(versionSubstitute, dependency.latestRelease);
+    const check = async (url: string) =>
+      await fetch(url.replace(/^.*?["']([^'"]+)['"].*?$/ig, "$1")).then(r => r.ok).catch(() => false);
+
+    if (!(await check(newURL))) {
+      const newURL2 = newURL.replace(dependency.latestRelease, `v${dependency.latestRelease}`);
+      if ((await check(newURL2))) {
+        newURL = newURL2;
+      } else {
+        log.warning(`Unable to locate these files:\n  - ${newURL}\n  - ${newURL2}`);
+        continue;
+      }
+    }
     dependencyFile = dependencyFile.replace(
       dependency.line,
-      dependency.versionURL.replace("${version}", dependency.latestRelease),
+      newURL,
     );
-  });
+  }
 
   // Re-write the file
   Deno.writeFileSync(
@@ -131,13 +159,18 @@ export async function update(
   log.info("Updated your dependencies!");
 }
 
-export interface Options extends DefaultOptions {
+export type Id<T> =
+  T extends infer U extends Record<string, unknown>
+    ? { [K in keyof U]: Id<U[K]> }
+  : T;
+
+export interface Options extends DefaultOptions, Record<string, unknown> {
   file: string;
   global: boolean;
 }
 export type Arguments = [string[]];
 
-export const updateCommand = new Command<Options, Arguments>()
+export const updateCommand = new Command<Options, Arguments & Record<string, unknown>>()
   .description("Update your dependencies")
   .version(version)
   .arguments("[deps...:string]")
@@ -146,4 +179,4 @@ export const updateCommand = new Command<Options, Arguments>()
     "Set dependency filename",
     { default: "deps.ts" },
   )
-  .action(update);
+  .action(update as any);
