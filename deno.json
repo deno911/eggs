@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "strict": false,
+    "lib": [
+      "deno.window",
+      "deno.ns",
+      "deno.unstable"
+    ]
+  },
+  "fmt": {
+    "files": {
+      "exclude": [
+        ".{git,github,devcontainer,vscode}"
+      ]
+    }
+  },
+  "lint": {
+    "files": {
+      "exclude": [
+        ".{git,github}",
+        "{test,benchmarks}"
+      ]
+    },
+    "rules": {
+      "exclude": [
+        "no-explicit-any",
+        "no-bad-types",
+        "no-namespace",
+        "no-empty-interface",
+        "ban-types",
+        "no-ts-comment"
+      ]
+    }
+  }
+}
