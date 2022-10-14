@@ -1,3 +1,4 @@
+// deno-lint-ignore-file
 import {
   Command,
   CompletionsCommand,
@@ -44,6 +45,7 @@ const notifier = new UpdateNotifier({
 
 const checkForUpdates = notifier.checkForUpdates();
 
+// @ts-ignore deep types
 const eggs = new Command<DefaultOptions, []>()
   .throwErrors()
   .name("eggs")

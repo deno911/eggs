@@ -9,46 +9,47 @@ export {
   join,
   relative,
   resolve,
-} from "https://x.nest.land/std@0.113.0/path/mod.ts";
+} from "https://deno.land/std@0.159.0/path/mod.ts";
 
 export {
   exists,
   existsSync,
   expandGlob,
   expandGlobSync,
+  walk,
   walkSync,
-} from "https://x.nest.land/std@0.113.0/fs/mod.ts";
+} from "https://deno.land/std@0.159.0/fs/mod.ts";
 
-export * as log from "https://x.nest.land/std@0.113.0/log/mod.ts";
+export * as log from "https://deno.land/std@0.159.0/log/mod.ts";
 
-export { LogRecord } from "https://x.nest.land/std@0.113.0/log/logger.ts";
+export { LogRecord } from "https://deno.land/std@0.159.0/log/logger.ts";
 
-export type { LevelName } from "https://x.nest.land/std@0.113.0/log/levels.ts";
-export { LogLevels } from "https://x.nest.land/std@0.113.0/log/levels.ts";
+export type { LevelName } from "https://deno.land/std@0.159.0/log/levels.ts";
+export { LogLevels } from "https://deno.land/std@0.159.0/log/levels.ts";
 
-export { BaseHandler } from "https://x.nest.land/std@0.113.0/log/handlers.ts";
+export { BaseHandler } from "https://deno.land/std@0.159.0/log/handlers.ts";
 
-export * from "https://x.nest.land/std@0.113.0/fmt/colors.ts";
+export * from "https://deno.land/std@0.159.0/fmt/colors.ts";
 
 export {
   assert,
   assertEquals,
   assertMatch,
-} from "https://x.nest.land/std@0.113.0/testing/asserts.ts";
+} from "https://deno.land/std@0.159.0/testing/asserts.ts";
 
 export {
   parse as parseYaml,
   stringify as stringifyYaml,
-} from "https://x.nest.land/std@0.113.0/encoding/yaml.ts";
+} from "https://deno.land/std@0.159.0/encoding/yaml.ts";
 
 /**************** cliffy ****************/
 export {
   Command,
   CompletionsCommand,
   HelpCommand,
-} from "https://x.nest.land/cliffy@0.20.1/command/mod.ts";
+} from "https://deno.land/x/cliffy@v0.25.2/command/mod.ts";
 
-export { string as stringType } from "https://x.nest.land/cliffy@0.20.1/flags/types/string.ts";
+export { string as stringType } from "https://deno.land/x/cliffy@v0.25.2/flags/types/string.ts";
 
 export {
   Checkbox,
@@ -56,31 +57,35 @@ export {
   Input,
   List,
   Select,
-} from "https://x.nest.land/cliffy@0.20.1/prompt/mod.ts";
+} from "https://deno.land/x/cliffy@v0.25.2/prompt/mod.ts";
 
-export type { ITypeInfo } from "https://x.nest.land/cliffy@0.20.1/flags/types.ts";
+export type { ITypeInfo } from "https://deno.land/x/cliffy@v0.25.2/flags/types.ts";
 
 /**************** semver ****************/
-export * as semver from "https://deno.land/x/semver@v1.4.0/mod.ts";
+export * as semver from "https://deno.land/x/semver@v1.4.1/mod.ts";
 
 /**************** base64 ****************/
-export * as base64 from "https://denopkg.com/chiefbiiko/base64@v0.2.0/mod.ts";
+export * as base64 from "https://denopkg.com/chiefbiiko/base64@v0.2.1/mod.ts";
 
 /**************** hatcher ****************/
 export {
+  latestStableVersion,
   latestVersion,
   NestLand,
   parseURL,
+  sortedVersions,
   UpdateNotifier,
 } from "https://x.nest.land/hatcher@0.10.2/mod.ts";
 
-export { isVersionUnstable } from "https://x.nest.land/hatcher@0.10.2/lib/utilities/utils.ts";
+export { isVersionUnstable, versionSubstitute } from "https://x.nest.land/hatcher@0.10.2/lib/utilities/utils.ts";
 
 export { install as installHatcher } from "https://x.nest.land/hatcher@0.10.2/lib/cli.ts";
 
 /**************** analyzer ****************/
-export type { DependencyTree } from "https://x.nest.land/analyzer@0.0.6/deno/tree.ts";
-export { dependencyTree } from "https://x.nest.land/analyzer@0.0.6/deno/tree.ts";
+export {
+  type DependencyTree,
+  dependencyTree,
+} from "https://x.nest.land/analyzer@0.0.6/deno/tree.ts";
 
 /**************** wait ****************/
 export { Spinner, wait } from "https://deno.land/x/wait@0.1.12/mod.ts";
