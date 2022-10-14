@@ -12,7 +12,7 @@ export async function upgrade(options: DefaultOptions) {
     log.error("Could not retrieve latest version.");
     return;
   }
-  if (semver.eq(newVersion, version)) {
+  if (semver.lte(newVersion, version)) {
     log.info("You are already using the latest CLI version!");
     return;
   }
