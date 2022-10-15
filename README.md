@@ -10,8 +10,13 @@
 
 <h3 align="center">Eggs CLI</h3>
 <p align="center">
-    The CLI used to publish and update modules in nest.land.
+    The CLI used to publish and update modules on nest.land.
   </p>
+<p align="center">
+ <em> <strong>
+  Since the official CLI is apparently unmaintained, and is incompatible<br>
+  with recent versions of Deno, this unofficial</strong> <small>(and unstable)</small>  <strong>fork was born.</strong></em><br>
+</p>
   <p align="center">
     <a href="https://nest.land/package/eggs">
       <img src="https://nest.land/badge.svg" alt="nest.land badge">
@@ -42,81 +47,85 @@
 - [Contents](#contents)
   - [Installation](#installation)
   - [List Of Commands](#list-of-commands)
-    - [Link](#link)
-    - [Init](#init)
-    - [Publish](#publish)
-    - [Update](#update)
-    - [Install](#install)
-    - [Upgrade](#upgrade)
+    - [link](#link)
+    - [init](#init)
+    - [publish](#publish)
+    - [update](#update)
+    - [install](#install)
+    - [upgrade](#upgrade)
   - [Contributing](#contributing)
 
 ## Installation
 
-**Note: You need to upgrade to Deno v1.6.0 or newer in order to use our CLI.**
+**Warning**: You need to upgrade to Deno v1.25 or newer in order to use this
+version of CLI.
 
-```shell script
-deno install -Afq --unstable https://x.nest.land/eggs@0.3.10/eggs.ts
+```bash
+deno install -Afq --unstable https://deno.land/eggs@0.3.30/eggs.ts
 ```
 
 For more information, see the [documentation](https://docs.nest.land/).
 
 ## List Of Commands
 
-### Link
+### link
 
 Before publishing a package to our registry, you'll need to get an API key.
 Visit [nest.land](https://nest.land/#start) to generate one.
 
-Then, use `link` to add it to the CLI:
+Then, use the `link` command to add it to the CLI:
 
-```shell script
+```bash
 eggs link <key>
 ```
 
-Alternatively, you can manually create a `.nest-api-key` file at your user home
-directory.
+Alternatively, you can manually create a `.nest-api-key` file in your home dir.
 
-### Init
+### init
 
-To publish a package, you need to create an `egg.json` file at the root of your
-project as well. To do this easily, type:
+The easiest path to publish a package on Nest.land is to create an `egg.json` or
+`egg.yaml` file at the root of your project. Otherwise you'll have to manually
+specify the project details via command line arguments every time you publish.
 
-```shell script
+The good news is the `eggs` CLI comes with a built-in tool to help jump start
+your new projects!
+
+```bash
 eggs init
 ```
 
-Note: If you'd like to specify a version that you'll publish to, you can include
-a `version` variable in `egg.json`.
+> **Note**: If you'd like to specify a version that you'll publish to, you can
+> include a `version` variable in `egg.json`.
 
-### Publish
+### publish
 
 After you've filled in the information located in `egg.json`, you can publish
 your package to our registry with this command:
 
-```shell script
+```bash
 eggs publish
 ```
 
 You'll receive a link to your package on our registry, along with an import URL
 for others to import your package from the Arweave blockchain!
 
-Note: It may take some time for the transaction to process in Arweave. Until
-then, we upload your files to our server, where they are served for 20 minutes
-to give the transaction time to process.
+> **Note**: It may take some time for the transaction to process in Arweave.
+> Until then, we upload your files to our server, where they are served for 20
+> minutes to give the transaction time to process.
 
-### Update
+### update
 
 You can easily update your dependencies and global scripts with the `update`
 command.
 
-```shell script
-eggs update [deps] <options>
+```bash
+eggs update [...deps] [options]
 ```
 
 Your dependencies are by default checked in the `deps.ts` file (current working
-directory). You can change this with `--file`
+directory). You can change this with the `--file` option.
 
-```shell script
+```bash
 eggs update # default to deps.ts
 eggs update --file dependencies.ts
 ```
@@ -124,41 +133,39 @@ eggs update --file dependencies.ts
 In regular mode, all your dependencies are updated. You can choose which ones
 will be modified by adding them as arguments.
 
-```shell script
+```bash
 eggs update # Updates everything
 eggs update http fs eggs # Updates only http, fs, eggs
 ```
 
-Several registries are supported. The current ones are:
+Several registries are supported:
 
-- x.nest.land
-- deno.land/x
-- deno.land/std
-- raw.githubusercontent.com
-- denopkg.com
+- [x] [`x.nest.land`](https://nest.land)
+- [x] [`deno.land/x`](https://deno.land/x)
+- [x] [`deno.land/std`](https://deno.land/std)
+- [x] [`denopkg.com`](https://denopkg.com)
+- [x] [`raw.githubusercontent.com`](https://github.com)
 
-If you want to add a registry, open an issue by specifying the registry url and
+If you want to add a registry, open an Issue by specifying the Registry URL and
 we'll add it.
 
-An example of updated file:
+An example dependency file, prior to updating:
 
 ```ts
-import * as colors from "https://deno.land/std@v0.55.0/fmt/colors.ts";
+import * as colors from "https://deno.land/std@0.144.0/fmt/colors.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.2.0/mod.ts";
-import * as eggs from "https://x.nest.land/eggs@v0.1.0/mod.ts";
-import * as http from "https://deno.land/std/http/mod.ts";
+import "https://deno.land/x/this@0.153.0/mod.ts";
 ```
 
 After `eggs update`:
 
 ```ts
-import * as colors from "https://deno.land/std@0.58.0/fmt/colors.ts";
+import * as colors from "https://deno.land/std@0.159.0/fmt/colors.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.2.1/mod.ts";
-import * as eggs from "https://x.nest.land/eggs@0.3.0/mod.ts";
-import * as http from "https://deno.land/std/http/mod.ts";
+import "https://deno.land/x/this@0.159.0/mod.ts";
 ```
 
-### Install
+### install
 
 Just like `deno install`, you can install scripts globally with eggs. By
 installing it this way, you will be notified if an update is available for your
@@ -167,23 +174,23 @@ script.
 The verification is smart, it can't be done more than once a day. To install a
 script, simply replace `deno` with `eggs`.
 
-```shell script
+```bash
 deno install --allow-write --allow-read -n [NAME] https://x.nest.land/[MODULE]@[VERSION]/cli.ts
 ```
 
-Becomes
+Becomes:
 
-```shell script
+```bash
 eggs install --allow-write --allow-read -n [NAME] https://x.nest.land/[MODULE]@[VERSION]/cli.ts
 ```
 
-The supported registries are the same as for the update command.
+The supported registries are the same as the update command.
 
-### Upgrade
+### upgrade
 
-To upgrade the eggs CLI, use the command shown:
+Upgrading the `eggs` CLI is pretty straightforward:
 
-```shell script
+```bash
 eggs upgrade
 ```
 
