@@ -77,7 +77,10 @@ export {
   UpdateNotifier,
 } from "https://x.nest.land/hatcher@0.10.2/mod.ts";
 
-export { isVersionUnstable, versionSubstitute } from "https://x.nest.land/hatcher@0.10.2/lib/utilities/utils.ts";
+export {
+  isVersionUnstable,
+  versionSubstitute,
+} from "https://x.nest.land/hatcher@0.10.2/lib/utilities/utils.ts";
 
 export { install as installHatcher } from "https://x.nest.land/hatcher@0.10.2/lib/cli.ts";
 

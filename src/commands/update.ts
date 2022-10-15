@@ -5,8 +5,8 @@ import {
   log,
   parseURL,
   semver,
-  yellow,
   versionSubstitute,
+  yellow,
 } from "../../deps.ts";
 import { version } from "../version.ts";
 import type { DefaultOptions } from "../commands.ts";
@@ -45,11 +45,15 @@ export async function update(
     return;
   }
 
-  const doubleCheck = confirm(`This will overwrite existing versions in ${pathToDepFile.split('/').at(-1)}. Should we proceed?`);
+  const doubleCheck = confirm(
+    `This will overwrite existing versions in ${
+      pathToDepFile.split("/").at(-1)
+    }. Should we proceed?`,
+  );
 
   if (!doubleCheck) {
     log.warning(
-      "Aborted the dependency update process."
+      "Aborted the dependency update process.",
     );
     return;
   }
@@ -131,16 +135,26 @@ export async function update(
   let dependencyFile = decoder.decode(Deno.readFileSync(pathToDepFile));
 
   for await (const dependency of dependenciesToUpdate) {
-    let newURL = dependency.versionURL.replace(versionSubstitute, dependency.latestRelease);
+    let newURL = dependency.versionURL.replace(
+      versionSubstitute,
+      dependency.latestRelease,
+    );
     const check = async (url: string) =>
-      await fetch(url.replace(/^.*?["']([^'"]+)['"].*?$/ig, "$1")).then(r => r.ok).catch(() => false);
+      await fetch(url.replace(/^.*?["']([^'"]+)['"].*?$/ig, "$1")).then((r) =>
+        r.ok
+      ).catch(() => false);
 
     if (!(await check(newURL))) {
-      const newURL2 = newURL.replace(dependency.latestRelease, `v${dependency.latestRelease.replace(/^v/i, '')}`);
+      const newURL2 = newURL.replace(
+        dependency.latestRelease,
+        `v${dependency.latestRelease.replace(/^v/i, "")}`,
+      );
       if ((await check(newURL2))) {
         newURL = newURL2;
       } else {
-        log.warning(`Unable to locate these files:\n  - ${newURL}\n  - ${newURL2}`);
+        log.warning(
+          `Unable to locate these files:\n  - ${newURL}\n  - ${newURL2}`,
+        );
         continue;
       }
     }
@@ -165,7 +179,10 @@ export interface Options extends DefaultOptions, Record<string, unknown> {
 }
 export type Arguments = [string[]];
 
-export const updateCommand = new Command<Options, Arguments & Record<string, unknown>>()
+export const updateCommand = new Command<
+  Options,
+  Arguments & Record<string, unknown>
+>()
   .description("Update your dependencies")
   .version(version)
   .arguments("[deps...:string]")
