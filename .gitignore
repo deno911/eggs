@@ -9,3 +9,4 @@ eggs-debug.log
 # Benchmarks
 benchmarks/**
 !benchmarks/README.md
+egg.json
