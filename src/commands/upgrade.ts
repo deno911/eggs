@@ -1,13 +1,37 @@
-import { Command, log, NestLand, semver } from "../../deps.ts";
+import {
+  bold,
+  brightGreen,
+  brightRed,
+  Command,
+  DenoLand,
+  log,
+  semver,
+} from "../../deps.ts";
 import type { DefaultOptions } from "../commands.ts";
 
 import { version } from "../version.ts";
 import { setupLog } from "../utilities/log.ts";
 
-export async function upgrade(options: DefaultOptions) {
+export type Options = (DefaultOptions & Record<string, unknown>);
+export type Arguments = [];
+
+export const upgradeCommand = new Command()
+  .version(version)
+  .description("Upgrade the eggs CLI to the latest available version.")
+  .action(upgrade);
+
+export async function upgrade(option: void | Options) {
+  const options = {
+    debug: upgradeCommand.getOption('debug'),
+    ...(typeof option === "object" ? option : {})
+  } as Options;
+
   await setupLog(options.debug);
 
-  const newVersion = await NestLand.latestVersion("eggs");
+  // Since this is a fork from the official CLI, we have to check a different
+  // registry for updates to the CLI (we're using DenoLand for now).
+  // It's also published to nest.land under the name 'eggy'.
+  const newVersion = await DenoLand.latestVersion("eggs");
   if (!newVersion) {
     log.error("Could not retrieve latest version.");
     return;
@@ -17,13 +41,23 @@ export async function upgrade(options: DefaultOptions) {
     return;
   }
 
+  const shouldUpgrade = confirm(
+    `${bold("New version of eggs is available!")} ${brightRed(version)} → ${
+      bold(brightGreen(newVersion))
+    }\n\nContinue with installing the new version?`,
+  );
+
+  if (!shouldUpgrade) {
+    return;
+  }
+
   const upgradeProcess = Deno.run({
     cmd: [
       "deno",
       "install",
       "--unstable",
       "-Afq",
-      `https://x.nest.land/eggs@${newVersion}/eggs.ts`,
+      `https://deno.land/x/eggs@${newVersion}/cli.ts`,
     ],
     stdout: "piped",
     stderr: "piped",
@@ -44,13 +78,7 @@ export async function upgrade(options: DefaultOptions) {
     throw new Error("Failed to upgrade to the latest CLI version!");
   }
 
-  log.info("Successfully upgraded eggs cli!");
+  log.info(`Successfully upgraded to ${bold(newVersion)}!`);
 }
 
-export type Options = DefaultOptions;
-export type Arguments = [];
-
-export const upgradeCommand = new Command<Options, Arguments>()
-  .version(version)
-  .description("Upgrade the current nest.land CLI.")
-  .action(upgrade);
+export default upgradeCommand;

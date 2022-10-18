@@ -1,16 +1,30 @@
-import { Command, installHatcher } from "../../deps.ts";
+import {
+  bold,
+  brightYellow,
+  Command,
+  installHatcher,
+  italic,
+  underline,
+} from "../../deps.ts";
 import type { DefaultOptions } from "../commands.ts";
 import { version } from "../version.ts";
 import { setupLog } from "../utilities/log.ts";
+import { LogLevelNames, logLevelType, urlType } from "../utilities/types.ts";
+
+const defaultOptions: DefaultOptions = {
+  debug: false,
+  outputLog: true,
+};
 
 export async function install(
-  options: Options,
-  ...args: string[]
-): Promise<void> {
+  options?: Options & DefaultOptions,
+  ...args: any[]
+): Promise<any> {
+  options = { ...defaultOptions, ...(options ?? {}) };
   await setupLog(options.debug);
 
   /** help option need to be parsed manually */
-  if (["-h", "--help", "help"].includes(args[0])) {
+  if (/^[-](?:[?]|h)|[-]{0,2}help$/i.test(args[0])) {
     installCommand.showHelp();
     return;
   }
@@ -20,61 +34,104 @@ export async function install(
 
 const desc = `Add update notification to any CLI.
 
-Installs a script as an executable in the installation root's bin directory.
-  eggs install --allow-net --allow-read https://x.nest.land/std/http/file_server.ts
-  eggs install https://x.nest.land/std/examples/colors.ts
+${
+  bold(
+    "Installs a script as an executable in the installation root's bin directory.",
+  )
+}
 
-To change the executable name, use -n/--name:
-  eggs install --allow-net --allow-read -n serve https://x.nest.land/std/http/file_server.ts
+  eggs install -A https://x.nest.land/std/http/file_server.ts
+  eggs install https://deno.land/std/examples/colors.ts
 
-The executable name is inferred by default:
-  - Attempt to take the file stem of the URL path. The above example would
-    become 'file_server'.
-  - If the file stem is something generic like 'main', 'mod', 'index' or 'cli',
-    and the path has no parent, take the file name of the parent path. Otherwise
-    settle with the generic name.
+${
+  bold(
+    `To change the executable name, use ${underline("-n")}/${
+      underline("--name")
+    }`,
+  )
+}:
 
-To change the installation root, use --root:
-  eggs install --allow-net --allow-read --root /usr/local https://x.nest.land/std/http/file_server.ts
+  eggs install -A -n serve https://x.nest.land/std/http/file_server.ts
 
-The installation root is determined, in order of precedence:
-  - --root option
-  - DENO_INSTALL_ROOT environment variable
-  - $HOME/.deno
+${bold("The name is inferred by default, with the following logic:")}
+  1. Attempt to take the file stem of the URL path. 
+     The above example would become 'file_server'.
+  2. If the file stem is something generic like 'main', 
+     'mod', 'index' or 'cli', ${bold("and")} the path has no parent,
+     use the ${italic("filename of the parent path")}. Otherwise
+     settle with the generic name.
+  3. If the resulting name has an '@...' suffix, strip it.
 
-These must be added to the path manually if required.`;
+${bold("To change the installation root, use --root:")}
 
-export type Options = DefaultOptions;
-export type Arguments = string[];
+  eggs install --root=/usr/local --allow-all https://deno.land/std/http/file_server.ts
 
-export const installCommand = new Command<Options, Arguments>()
+${bold("The installation root is determined, in order of precedence:")}
+  1. ${bold("--root")} option
+  2. ${bold("$DENO_INSTALL_ROOT")} (environment variable)
+  3. ${bold("$DENO_INSTALL")} (environment variable)
+  4. ${bold("$HOME/.deno")}
+
+${
+  bold(
+    `${
+      brightYellow("Important!")
+    } These must be added to the path manually if required.`,
+  )
+}
+`;
+
+export type Options = Record<string, unknown> & DefaultOptions;
+export type Arguments = [string[]];
+
+export const installCommand = new Command()
   .version(version)
   .description(desc)
-  .arguments("[options...:string]")
-  .option("-A, --allow-all", "Allow all permissions")
-  .option("--allow-env", "Allow environment access")
-  .option("--allow-hrtime", "Allow high resolution time measurement")
-  .option("--allow-net=<allow-net>", "Allow network access")
-  .option("--allow-plugin", "Allow loading plugins")
-  .option("--allow-read=<allow-read>", "Allow file system read access")
-  .option("--allow-run", "Allow running subprocesses")
-  .option("--allow-write=<allow-write>", "Allow file system write access")
+  .type("LogLevel", logLevelType, { global: true, override: true })
+  .type("URL", urlType, { global: true, override: true })
+  .arguments("[url:URL]")
+  .option("--root <root>", "Installation root", { default: null })
+  .option("-f, --force", "Force install, overwriting existing executable", {
+    default: false,
+  })
+  .option("-A, --allow-all", "Allow all permissions", { default: false })
+  .option("--allow-env=[allow-env...]", "Allow environment access", {
+    default: false,
+  })
+  .option("--allow-hrtime", "Allow high resolution time measurement", {
+    default: false,
+  })
+  .option("--allow-net=[allow-net...]", "Allow network access", {
+    default: false,
+  })
+  .option("--allow-plugin", "Allow loading plugins", { default: false })
+  .option("--allow-ffi=[allow-ffi...]", "Allow loading dynamic libraries", {
+    default: false,
+  })
+  .option("--allow-read=[allow-read...]", "Allow file system read access", {
+    default: false,
+  })
+  .option("--allow-run=[allow-run...]", "Allow running subprocesses", {
+    default: false,
+  })
+  .option("--allow-sys=[allow-sys...]", "Allow access to system info", {
+    default: false,
+  })
+  .option("--allow-write=[allow-write...]", "Allow file system write access", {
+    default: false,
+  })
+  .option("--unstable", "Enable unstable APIs", { default: false })
+  .option("--cert <FILE>", "Load certificate authority from PEM encoded file", {
+    default: null,
+  })
   .option(
-    "--cert <FILE>",
-    "Load certificate authority from PEM encoded file",
+    "-L, --log-level <level:LogLevel>",
+    "Set log level (possible values: debug, info)",
+    { default: "info" as unknown as LogLevelNames },
   )
-  .option(
-    "-f, --force",
-    "Forcefully overwrite existing installation",
-  )
-  .option(
-    "-L, --log-level <log-level> ",
-    "Set log level [possible values: debug, info]",
-  )
-  .option("-n, --name <name>", "Executable file name")
-  .option("-q, --quiet", "Suppress diagnostic output")
-  .option("--root <root>", "Installation root")
-  .option("--unstable", "Enable unstable APIs")
+  .option("-q, --quiet", "Suppress diagnostic output", { default: false })
   /** Unknown options cannot be parsed */
-  .useRawArgs()
-  .action(install);
+  .action(install)
+  .useRawArgs();
+
+export default installCommand;

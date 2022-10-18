@@ -1,30 +1,73 @@
-import { ITypeInfo, semver } from "../../deps.ts";
+import {
+  // EggJson,
+  EnumType,
+  ITypeInfo,
+  LogLevels,
+  semver,
+} from "../../deps.ts";
 
-export const releases = [
-  "patch",
-  "minor",
+/* cliffy custom command line types */
+
+/** Permitted log level names (type alias) */
+export type LogLevelNames = ["error", "debug", "info", "warning"];
+
+/** Permitted log level names (constant) */
+export const LogLevelNames = Object.keys(LogLevels)
+  .filter((k) => isNaN(Number(k))) as LogLevelNames;
+
+/** Permitted log level names (cliffy enumtype) */
+export const logLevelType = new EnumType(LogLevelNames);
+
+// ReleaseType for 'releaseType' / 'bump' fields in egg.json
+export const releases: [
   "major",
+  "minor",
+  "patch",
   "pre",
-  "prepatch",
-  "preminor",
   "premajor",
+  "preminor",
+  "prepatch",
+  "prerelease",
+] = [
+  "major",
+  "minor",
+  "patch",
+  "pre",
+  "premajor",
+  "preminor",
+  "prepatch",
   "prerelease",
 ];
 
-export function validateRelease(value: string): boolean {
-  return releases.includes(value);
-}
+export const releaseTypes = releases;
 
-export function releaseType({ name, value }: ITypeInfo): semver.ReleaseType {
+export type ReleaseType = (typeof releases)[number];
+
+export function validateRelease(value: string): value is ReleaseType {
+  return (releases as string[]).includes(value);
+}
+export function assertReleaseType(
+  name: string,
+  value: string,
+): asserts value is ReleaseType {
   if (!validateRelease(value)) {
     throw new Error(
-      `Option --${name} must be a valid release type but got: ${value}.\nAccepted values are ${
+      `Option --${name} must be a valid ReleaseType as defined by Semantic Versioning 2.0.\n\nValue received: ${value}.\nValues accepted:\n\t${
         releases.join(", ")
       }.`,
     );
   }
-  return value as semver.ReleaseType;
 }
+export function releaseType({ name, value }: ITypeInfo): ReleaseType {
+  // normalize the value's case and whitespace
+  value = String(value).trim().toLowerCase();
+  // assert its validity
+  assertReleaseType(name, value);
+  // spit it out
+  return value as ReleaseType;
+}
+
+// version type with semver validation
 
 export function validateVersion(value: string): boolean {
   return !!semver.valid(value);
@@ -39,6 +82,8 @@ export function versionType({ name, value }: ITypeInfo): string {
   return value;
 }
 
+// url type with regex validation
+
 export function validateURL(value: string): boolean {
   const urlRegex =
     /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/;
@@ -46,10 +91,11 @@ export function validateURL(value: string): boolean {
 }
 
 export function urlType({ name, value }: ITypeInfo): string {
-  if (!validateURL(value)) {
+  try {
+    return new URL(value).toString();
+  } catch {
     throw new Error(
       `Option --${name} must be a valid url but got: ${value}.`,
     );
   }
-  return value;
 }

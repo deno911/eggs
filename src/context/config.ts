@@ -1,10 +1,11 @@
 import {
+  type EggJson,
   exists,
   extname,
   join,
-  parseYaml,
+  JSONC,
   semver,
-  stringifyYaml,
+  YAML,
 } from "../../deps.ts";
 import { writeJson } from "../utilities/json.ts";
 
@@ -17,26 +18,26 @@ export enum ConfigFormat {
 /** Configuration options.
  * All fields are optional but most
  * commands require at least some. */
-export interface Config {
+export interface Config extends Omit<EggJson, "$schema"> {
   $schema: string;
-
   name: string;
   entry: string;
   description: string;
   homepage: string;
+  repository?: string;
   unstable?: boolean;
   unlisted: boolean;
 
   version: string;
   releaseType?: semver.ReleaseType;
-
+  bump?: semver.ReleaseType;
   files?: string[];
   ignore?: string[];
-
   yes?: boolean;
   checkFormat?: boolean | string;
   checkTests?: boolean | string;
   checkInstallation?: boolean;
+  checkAll?: boolean;
   check: boolean;
 }
 
@@ -63,14 +64,14 @@ export async function defaultConfig(
  * @param path configuration file path */
 export function configFormat(path: string): ConfigFormat {
   const ext = extname(path);
-  if (ext.match(/^.ya?ml$/)) return ConfigFormat.YAML;
+  if (/^.ya?ml$/.test(ext)) return ConfigFormat.YAML;
   return ConfigFormat.JSON;
 }
 
 /** writeYaml. (similar to writeJson)
  * @private */
-function writeYaml(filename: string, content: string): void {
-  return Deno.writeFileSync(filename, new TextEncoder().encode(content));
+async function writeYaml(filename: string, data: Record<string, unknown>) {
+  return await Deno.writeTextFile(filename, YAML.stringify(data));
 }
 
 /** Write config with specific provided format. */
@@ -80,7 +81,7 @@ export async function writeConfig(
 ): Promise<void> {
   switch (format) {
     case ConfigFormat.YAML:
-      await writeYaml(join(Deno.cwd(), "egg.yml"), stringifyYaml(data));
+      await writeYaml(join(Deno.cwd(), "egg.yml"), data);
       break;
     case ConfigFormat.JSON:
       await writeJson(join(Deno.cwd(), "egg.json"), data, { spaces: 2 });
@@ -104,7 +105,7 @@ export function parseConfig(
   format: ConfigFormat,
 ): Partial<Config> {
   if (format == ConfigFormat.YAML) {
-    return (parseYaml(data) ?? {}) as Partial<Config>;
+    return (YAML.parse(data) ?? {}) as Partial<Config>;
   }
-  return JSON.parse(data) as Partial<Config>;
+  return JSONC.parse(data) as Partial<Config>;
 }

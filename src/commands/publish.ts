@@ -1,31 +1,31 @@
 import {
-  basename as _basename,
+  basename,
   bold,
   Command,
   Confirm,
-  dependencyTree as _dependencyTree,
+  dependencyTree,
   dim,
-  dirname as _dirname,
+  dirname,
   existsSync,
   globToRegExp,
   gray,
   green,
   isVersionUnstable,
   italic,
-  join as _join,
+  join,
   log,
+  normalizePath,
   relative,
   semver,
+  underline,
 } from "../../deps.ts";
 import type { DefaultOptions } from "../commands.ts";
 import { releaseType, urlType, versionType } from "../utilities/types.ts";
-
 import { ENDPOINT } from "../api/common.ts";
 import { fetchModule } from "../api/fetch.ts";
 import { postPieces, postPublishModule, PublishModule } from "../api/post.ts";
-
 import {
-  Config,
+  type Config,
   configFormat,
   defaultConfig,
   writeConfig,
@@ -34,7 +34,6 @@ import { gatherContext } from "../context/context.ts";
 import { extendsIgnore, parseIgnore } from "../context/ignore.ts";
 import type { Ignore } from "../context/ignore.ts";
 import { MatchedFile, matchFiles, readFiles } from "../context/files.ts";
-
 import { getAPIKey } from "../keyfile.ts";
 import { version } from "../version.ts";
 import { highlight, setupLog, spinner } from "../utilities/log.ts";
@@ -72,10 +71,17 @@ function ensureCompleteConfig(
   config.description ||= "";
   config.homepage ||= "";
   config.ignore ||= [];
-  config.unlisted ??= false;
-  config.check ??= true;
+  config.unlisted ||= false;
+  config.check ||= true;
+  config.checkAll ||= true;
 
   return isConfigComplete;
+}
+
+function normalize(path: string) {
+  path = relative(Deno.cwd(), path).replace(/\\/g, "/");
+
+  return `./${normalizePath(path).replace(/^\.\/|\//g, "")}`;
 }
 
 function ensureFiles(config: Config, matched: MatchedFile[]): boolean {
@@ -83,7 +89,7 @@ function ensureFiles(config: Config, matched: MatchedFile[]): boolean {
     log.warning("No README found at project root, continuing without one...");
   }
 
-  config.entry = "./" + relative(Deno.cwd(), config.entry).replace(/\\/g, "/");
+  config.entry = normalize(config.entry);
   const entryRegExp = globToRegExp(config.entry);
 
   if (!matched.find((e) => entryRegExp.test(e.path))) {
@@ -178,7 +184,7 @@ async function checkUp(
       {
         cmd: typeof config.checkTests === "string"
           ? config.checkTests?.split(" ")
-          : ["deno", "test", "-A", "--unstable"],
+          : ["deno", "test", "-A", "--unstable", "--no-check"],
         stderr: "piped",
         stdout: "piped",
       },
@@ -204,7 +210,7 @@ async function checkUp(
   }
 
   // Test disabled: analyzer is still unstable
-  /* if (config.checkInstallation ?? config.check) {
+  if (config.checkInstallation ?? config.check) {
     const wait = spinner.info("Test installation...");
     const tempDir = await Deno.makeTempDir();
     for (let i = 0; i < matched.length; i++) {
@@ -236,12 +242,12 @@ async function checkUp(
       }
       return false;
     }
-  } */
+  }
 
   return true;
 }
 
-export async function publish(options: Options, name?: string) {
+export async function publish(options: Options, name: unknown) {
   await setupLog(options.debug);
 
   const apiKey = await getAPIKey();
@@ -256,7 +262,7 @@ export async function publish(options: Options, name?: string) {
 
   const [gatheredContext, contextIgnore] = await gatherContext();
   log.debug("Options:", options);
-  const gatheredOptions = gatherOptions(options, name);
+  const gatheredOptions = gatherOptions(options, name as string);
   if (!gatheredContext || !gatheredOptions) return;
 
   const egg: Partial<Config> = {
@@ -292,10 +298,14 @@ export async function publish(options: Options, name?: string) {
     latest = existing.getLatestVersion();
     egg.description = egg.description || existing.description;
     egg.homepage = egg.homepage || existing.repository || "";
+    egg.repository = existing.repository || egg.homepage || "";
   }
+
+  egg.releaseType ??= egg.bump ?? "patch";
   if (egg.releaseType) {
     egg.version = semver.inc(egg.version || latest, egg.releaseType) as string;
   }
+
   if (
     existing &&
     existing.packageUploadNames.indexOf(`${egg.name}@${egg.version}`) !== -1
@@ -316,12 +326,12 @@ export async function publish(options: Options, name?: string) {
     name: egg.name,
     version: egg.version,
     description: egg.description,
-    repository: egg.homepage,
+    repository: egg.repository,
     unlisted: egg.unlisted,
     stable: !(egg.unstable ?? isVersionUnstable(egg.version)),
     upload: true,
     latest: semver.compare(egg.version, latest) === 1,
-    entry: egg.entry.substr(1),
+    entry: normalize(egg.entry),
     // TODO(@oganexon): make this format consistent between eggs & website
     // (here we need to have "/" at the start of the string, where in the website "/" is removed)
   };
@@ -369,7 +379,7 @@ export async function publish(options: Options, name?: string) {
   const pieceResponse = await postPieces(
     uploadResponse.token,
     Object.entries(matchedContent).reduce((prev, [key, value]) => {
-      prev[key.substr(1)] = value;
+      prev[key.slice(1)] = value;
       return prev;
     }, {} as Record<string, string>),
   );
@@ -386,7 +396,11 @@ export async function publish(options: Options, name?: string) {
     log.debug("Updated configuration.");
   }
 
-  log.info(`Successfully published ${bold(egg.name)}!`);
+  log.info(
+    `🎉 Successfully published ${bold(egg.name)} @ ${bold(egg.version)} to ${
+      underline("Nest.land")
+    } 🥚`,
+  );
 
   const files = Object.entries(pieceResponse.files).reduce(
     (previous, current) => {
@@ -411,62 +425,43 @@ export async function publish(options: Options, name?: string) {
   log.info(highlight("https://github.com/nestdotland/nest.land/discussions"));
 }
 
-export interface Options extends DefaultOptions {
+export interface Options extends DefaultOptions, Partial<Config> {
   dryRun?: boolean;
   yes?: boolean;
-  version?: string;
-  releaseType?: semver.ReleaseType;
-  entry?: string;
-  description?: string;
-  homepage?: string;
-  unstable?: boolean;
-  unlisted?: boolean;
-  files?: string[];
-  ignore?: string[];
-  checkFormat?: boolean | string;
-  checkTests?: boolean | string;
-  checkInstallation?: boolean;
-  check?: boolean;
 }
 export type Arguments = [string];
 
-export const publishCommand = new Command<Options, Arguments>()
-  .description("Publishes your module to the nest.land registry.")
+export const publishCommand = new Command()
   .version(version)
+  .description("Publishes your module to the nest.land registry.")
+  .type("url", urlType)
   .type("release", releaseType)
   .type("version", versionType)
-  .type("url", urlType)
   .arguments("[name: string]")
   .option(
     "-d, --dry-run",
     "No changes will actually be made, reports the details of what would have been published.",
   )
-  .option(
-    "-Y, --yes",
-    "Disable confirmation prompts.",
-  )
+  .option("-Y, --yes", "Disable confirmation prompts.")
   .option(
     "--description <value:string>",
     "A description of your module that will appear on the gallery.",
   )
   .option(
     "--release-type <value:release>",
-    "Increment the version by the release type.",
+    "Increment the version by semver release type.",
   )
   .option("--version <value:version>", "Set the version.")
-  .option(
-    "--entry <value:string>",
-    "The main file of your project.",
-  )
+  .option("--entry <value:string>", "The main entry point of your project.")
   .option("--unstable", "Flag this version as unstable.")
   .option("--unlisted", "Hide this module/version on the gallery.")
   .option(
     "--homepage <value:url>",
-    "A link to your homepage. Usually a repository.",
+    "URL to your project homepage. Usually a repository.",
   )
   .option(
     "--files <values...:string>",
-    "All the files that should be uploaded to nest.land. Supports file globbing.",
+    "Glob patterns for files to include in the upload to nest.land.",
   )
   .option(
     "--ignore <values...:string>",
@@ -481,8 +476,7 @@ export const publishCommand = new Command<Options, Arguments>()
     "--check-installation",
     "Simulates a dummy installation and check for missing files in the dependency tree.",
   )
-  .option(
-    "--no-check",
-    `Use this option to not perform any check.`,
-  )
+  .option("--no-check", "Use this option to not perform any check.")
   .action(publish);
+
+export default publishCommand;

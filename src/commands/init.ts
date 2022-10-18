@@ -8,7 +8,7 @@ import {
   Select,
 } from "../../deps.ts";
 import {
-  Config,
+  type Config,
   ConfigFormat,
   configFormat,
   defaultConfig,
@@ -21,6 +21,7 @@ import { fetchModule } from "../api/fetch.ts";
 import type { DefaultOptions } from "../commands.ts";
 import { version as eggsVersion } from "../version.ts";
 import { setupLog } from "../utilities/log.ts";
+import { LogLevelNames, logLevelType } from "../utilities/types.ts";
 
 /** Init Command.
  * `init` creates (or overrides) configuration in
@@ -103,19 +104,23 @@ export async function init(options: Options) {
   });
 
   let files: string[] | undefined = await List.prompt({
-    message: "Files and relative directories to publish, separated by a comma:",
+    message:
+      "Relative glob patterns for files/folders to ignore, separated by commas:",
     default: currentConfig.files ?? [],
   });
   if (files?.length === 1 && files[0] === "") files = [];
+  files = files.filter((f) => !/^(?:\.\/|)\*\*\/\*\/?$/.test(f));
 
   let ignore: string[] | undefined = await List.prompt({
-    message: "Files and relative directories to ignore, separated by a comma:",
+    message:
+      "Relative glob patterns for files/folders to ignore, separated by commas:",
     default: currentConfig.ignore ?? [],
   });
   if (ignore?.length === 1 && ignore[0] === "") ignore = [];
 
   const check: boolean | undefined = await Confirm.prompt({
-    message: "Perform all checks before publication?",
+    message:
+      "Enable all checks before publication? (format, lint, tests, installation)",
     default: currentConfig.check ?? false,
   });
   const noCheck = !check;
@@ -136,7 +141,7 @@ export async function init(options: Options) {
 
   let checkTests: boolean | string | undefined = noCheck &&
       (await Confirm.prompt({
-        message: "Test your code before publication?",
+        message: "Test code before publication?",
         default: !!currentConfig.checkTests ?? false,
       }))
     ? await Input.prompt({
@@ -155,7 +160,7 @@ export async function init(options: Options) {
     }));
 
   const format = await Select.prompt({
-    message: "Config format: ",
+    message: "Config file format: ",
     default: configPath
       ? configFormat(configPath).toUpperCase()
       : ConfigFormat.JSON,
@@ -170,7 +175,7 @@ export async function init(options: Options) {
   });
 
   const config: Partial<Config> = {
-    $schema: `https://x.nest.land/eggs@${eggsVersion}/src/schema.json`,
+    $schema: `https://x.nest.land/eggy@${eggsVersion}/src/schema.json`,
     name,
     entry,
     description,
@@ -194,10 +199,19 @@ export async function init(options: Options) {
   log.info("Successfully created config file.");
 }
 
-export type Options = DefaultOptions;
+export type Options = DefaultOptions & Record<string, unknown>;
 export type Arguments = [];
 
-export const initCommand = new Command<Options, Arguments>()
+export const initCommand = new Command()
   .version(eggsVersion)
   .description("Initiates a new module for the nest.land registry.")
+  .type("LogLevel", logLevelType, { global: true, override: true })
+  .option(
+    "-L, --log-level <level:LogLevel>",
+    "Set log level (possible values: debug, info)",
+    { default: "info" as unknown as LogLevelNames },
+  )
+  .option("-q, --quiet", "Suppress diagnostic output", { default: false })
   .action(init);
+
+export default initCommand;

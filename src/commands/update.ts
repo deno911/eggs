@@ -19,11 +19,9 @@ interface ModuleToUpdate {
   latestRelease: string;
 }
 
-const decoder = new TextDecoder("utf-8");
-
 export async function update(
   options: Options,
-  deps: Record<string, unknown> | string[] = [],
+  deps: unknown | string[] = [],
 ): Promise<void> {
   const requestedModules = (
     Array.isArray(deps) ? deps : Object.values(deps ?? {})
@@ -36,7 +34,7 @@ export async function update(
   /** Gather the path to the user's dependency file using the CLI arguments */
   let pathToDepFile = "";
   try {
-    pathToDepFile = Deno.realPathSync("./" + options.file);
+    pathToDepFile = await Deno.realPath("./" + options.file);
   } catch {
     // Dependency file doesn't exist
     log.warning(
@@ -60,10 +58,9 @@ export async function update(
 
   /** Creates an array of strings from each line inside the dependency file.
    * Only extracts lines that contain "https://" to strip out non-import lines. */
-  const dependencyFileContents: string[] = decoder
-    .decode(Deno.readFileSync(pathToDepFile))
-    .split(/[\r\n]/)
-    .filter((line) => line.indexOf("https://") > 0);
+  const dependencyFileContents: string[] = (
+    await Deno.readTextFile(pathToDepFile)
+  ).split(/[\r\n]/).filter((line) => line.indexOf("https://") > 0);
 
   if (dependencyFileContents?.length === 0) {
     log.warning(
@@ -74,8 +71,8 @@ export async function update(
 
   log.debug("Dependency file contents: ", dependencyFileContents);
 
-  /** For each import line in the users dependency file, collate the data ready to be re-written
-   * if it can be updated.
+  /** For each import line in the users dependency file, collate the data ready
+   * to be re-written if it can be updated.
    * Skips the dependency if it is not versioned (no need to try to update it) */
   const dependenciesToUpdate: Array<ModuleToUpdate> = [];
   for (const line of dependencyFileContents) {
@@ -132,7 +129,7 @@ export async function update(
   }
 
   // Loop through the users dependency file, replacing the imported version with the latest release for each dep
-  let dependencyFile = decoder.decode(Deno.readFileSync(pathToDepFile));
+  let dependencyFile = await Deno.readTextFile(pathToDepFile);
 
   for await (const dependency of dependenciesToUpdate) {
     let newURL = dependency.versionURL.replace(
@@ -173,22 +170,20 @@ export async function update(
   log.info("Updated your dependencies!");
 }
 
-export interface Options extends DefaultOptions, Record<string, unknown> {
+export type Options = DefaultOptions & Record<string, unknown> & {
   file: string;
-  global: boolean;
-}
+};
 export type Arguments = [string[]];
 
-export const updateCommand = new Command<
-  Options,
-  Arguments & Record<string, unknown>
->()
+export const updateCommand = new Command()
   .description("Update your dependencies")
   .version(version)
-  .arguments("[deps...:string]")
+  .arguments("[...deps: string]")
   .option(
     "--file <file:string>",
     "Set dependency filename",
     { default: "deps.ts" },
   )
-  .action(update as any);
+  .action(update);
+
+export default updateCommand;

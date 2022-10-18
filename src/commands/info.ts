@@ -168,13 +168,15 @@ function beautifyDependency(dep: string) {
   }
 }
 
-export interface Options extends DefaultOptions {
-  full: boolean;
-  raw: boolean;
-}
+export type Options = DefaultOptions & {
+  full?: boolean;
+  raw?: boolean;
+  file?: string;
+} & Record<string, unknown>;
+
 export type Arguments = [string];
 
-export const infoCommand = new Command<Options, Arguments>()
+export const infoCommand = new Command()
   .version(version)
   .arguments("[file:string]")
   .option(
@@ -186,6 +188,8 @@ export const infoCommand = new Command<Options, Arguments>()
     "Displays the raw URLs, without modifying them.",
   )
   .description(
-    "Displays the dependency tree of a file in a more readable, colorful way. Useful when you have imports that redirect urls (like nest.land).",
+    "Display readable & colorful file dependency trees.",
   )
   .action(info);
+
+export default infoCommand;
