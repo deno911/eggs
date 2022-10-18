@@ -4,9 +4,26 @@
 
 # Nest.land - eggs
 nestkey.json
-eggs-debug.log
+.nest-api-key
 
 # Benchmarks
 benchmarks/**
 !benchmarks/README.md
-egg.json
+
+# Logs
+*.log
+.*.log
+eggs-debug.log
+
+# Private
+*.env
+*.env*
+!.env.example
+!.env.sample
+!.env.vault
+!.env.project
+
+# Since npm: specifier is now supported
+node_modules
+.npm
+**/node_modules/**

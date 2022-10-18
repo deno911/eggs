@@ -1,0 +1,28 @@
+{
+  "$schema": "https://deno.land/x/eggs@0.3.30/src/schema.json",
+  "name": "eggy",
+  "entry": "./eggs.ts",
+  "description": "Unofficial fork of the CLI used to publish and update modules on nest.land. Fixed for Deno 1.25+",
+  "homepage": "https://github.com/deno911/eggs",
+  "repository": "https://github.com/deno911/eggs",
+  "version": "0.3.31",
+  "releaseType": "patch",
+  "bump": "patch",
+  "unstable": false,
+  "unlisted": false,
+  "files": [
+    "./*.ts",
+    "./src/**/*",
+    "LICENSE",
+    "README.md"
+  ],
+  "ignore": [
+    "./test",
+    "./benchmarks"
+  ],
+  "checkFormat": true,
+  "checkTests": true,
+  "checkInstallation": true,
+  "checkAll": true,
+  "check": true
+}

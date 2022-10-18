@@ -36,7 +36,7 @@ template: |
   **Using Deno**
 
   ```sh
-  deno install -Afq --unstable -n eggs https://x.nest.land/eggs@$RESOLVED_VERSION/eggs.ts
+  deno install -Afq --unstable -n eggs https://deno.land/eggs@$RESOLVED_VERSION/cli.ts
   ```
 
   **Using eggs**

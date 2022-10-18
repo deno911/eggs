@@ -2,7 +2,7 @@ name: Ship
 
 on:
   push:
-    branches: [master]
+    branches: [develop]
 
 jobs:
   release:
