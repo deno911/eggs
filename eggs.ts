@@ -1,76 +1,87 @@
+#!/usr/bin/env -S deno run -A --unstable
+
+/// <reference no-default-lib="true" />
+/// <reference lib="deno.ns" />
+/// <reference lib="deno.window" />
+/// <reference lib="deno.unstable" />
+
 // deno-lint-ignore-file
 import {
-  Command,
-  CompletionsCommand,
-  HelpCommand,
+  DenoLand,
   log,
-  NestLand,
   UpdateNotifier,
 } from "./deps.ts";
-import type { DefaultOptions } from "./src/commands.ts";
-import { linkCommand } from "./src/commands/link.ts";
-import { initCommand } from "./src/commands/init.ts";
-import { publishCommand } from "./src/commands/publish.ts";
-import { updateCommand } from "./src/commands/update.ts";
-import { installCommand } from "./src/commands/install.ts";
-import { upgradeCommand } from "./src/commands/upgrade.ts";
-import { infoCommand } from "./src/commands/info.ts";
-
-import { version } from "./src/version.ts";
-
+import {
+  Command,
+  type DefaultOptions,
+  completions,
+  help,
+  info,
+  init,
+  install,
+  link,
+  publish,
+  update,
+  upgrade,
+} from "./src/commands.ts";
 import {
   errorOccurred,
   handleError,
   setupLog,
   writeLogFile,
 } from "./src/utilities/log.ts";
+import { version } from "./src/version.ts";
+import { LogLevelNames, logLevelType } from "./src/utilities/types.ts";
 
 const commands = {
-  link: linkCommand,
-  init: initCommand,
-  publish: publishCommand,
-  update: updateCommand,
-  install: installCommand,
-  upgrade: upgradeCommand,
-  info: infoCommand,
+  help,
+  completions,
+  info,
+  init,
+  install,
+  link,
+  publish,
+  update,
+  upgrade,
 };
 
 await setupLog();
 
 const notifier = new UpdateNotifier({
   name: "eggs",
-  registry: NestLand,
+  registry: DenoLand,
   currentVersion: version,
 });
 
 const checkForUpdates = notifier.checkForUpdates();
 
 // @ts-ignore deep types
-const eggs = new Command<DefaultOptions, []>()
+const eggs = new Command()
   .throwErrors()
   .name("eggs")
   .version(version)
   .description(
-    "nest.land - A module registry and CDN for Deno, on the permaweb",
+    "🥚 nest.land - module registry and CDN for Deno, on the permaweb",
   )
-  .option("-D, --debug", "Print additional information.", { global: true })
-  .option(
-    "-o, --output-log",
-    "Create a log file after command completion.",
-    { global: true },
-  )
-  .action(() => {
-    eggs.showHelp();
-  })
-  .command("help", new HelpCommand())
-  .command("completions", new CompletionsCommand())
-  .command("link", linkCommand)
-  .command("init", initCommand)
-  .command("publish", publishCommand)
-  .command("update", updateCommand)
-  .command("install", installCommand)
-  .command("info", infoCommand)
-  .command("upgrade", upgradeCommand);
+  .type("LogLevel", logLevelType, { global: true })
+  .option("-D, --debug",
+          "Print additional information.",
+          { global: true })
+  .option("-o, --output-log",
+          "Create a log file after execution.",
+          { global: true })
+  .option("-L, --log-level <level:LogLevel>",
+          `Set log level.\n`,
+          { global: true, default: "info" as unknown as LogLevelNames })
+  .option("-q, --quiet", "Suppress diagnostic output",
+          { global: true, default: false })
+  .action(() => { eggs.showHelp() });
+
+export type CommandName = keyof typeof commands;
+
+for (const name in commands) {
+  eggs.command(name, commands[name as CommandName]);
+}
 
 try {
   const { options } = await eggs.parse(Deno.args);

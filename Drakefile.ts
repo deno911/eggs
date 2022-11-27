@@ -1,22 +1,21 @@
-import { desc, run, sh, task } from "https://x.nest.land/drake@1.5.0/mod.ts";
+import { desc, run, sh, task, join } from "./deps.ts";
 import { version } from "./src/version.ts";
-import { join } from "./deps.ts";
 
 const encoder = new TextEncoder();
 
 desc("Run tests.");
 task("test", [], async function () {
-  await sh(`deno test -A --unstable`);
+  await sh(`deno test -A --unstable --no-check`);
 });
 
 desc("Format source files.");
 task("format", [], async function () {
-  await sh(`deno fmt`);
+  await sh(`deno fmt --unstable`);
 });
 
 desc("Format source files.");
 task("check-format", [], async function () {
-  await sh(`deno fmt --check`);
+  await sh(`deno fmt --check --unstable`);
 });
 
 desc("Lint source files.");
@@ -37,14 +36,14 @@ task("link", [], async function () {
 desc("Reports the details of what would have been published.");
 task("dry-publish", [], async function () {
   await sh(
-    `deno run -A --unstable eggs.ts publish eggs -DYod --entry eggs.ts --version ${version}-dev --no-check --check-installation`,
+    `deno run -A --unstable eggs.ts publish eggs -DYod --entry eggs.ts --version ${version}-dev --no-check`,
   );
 });
 
 desc("Publishes eggs to the nest.land registry.");
 task("publish", [], async function () {
   await sh(
-    `deno run -A --unstable eggs.ts publish eggs -DYo --entry eggs.ts --version ${version} --no-check --check-installation`,
+    `deno run -A --unstable eggs.ts publish eggy -DYo --entry eggs.ts --version ${version} --no-check`,
   );
 });
 
@@ -72,7 +71,9 @@ task("setup-github-actions", [], async function () {
   const home = Deno.env.get("HOME") ?? // for linux / mac
     Deno.env.get("USERPROFILE") ?? // for windows
     "/";
-  const path = encoder.encode(join(home, ".deno", "bin"));
+  const path = encoder.encode(
+    Deno.env.get("DENO_INSTALL_ROOT") ?? join(home, ".deno", "bin")
+  );
   const GITHUB_PATH = Deno.env.get("GITHUB_PATH");
   if (!GITHUB_PATH) throw new Error("Unable to get Github path");
   await Deno.writeFile(GITHUB_PATH, path, { append: true });

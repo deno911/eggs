@@ -21,12 +21,18 @@ import { fetchModule } from "../api/fetch.ts";
 import type { DefaultOptions } from "../commands.ts";
 import { version as eggsVersion } from "../version.ts";
 import { setupLog } from "../utilities/log.ts";
-import { LogLevelNames, logLevelType } from "../utilities/types.ts";
 
-/** Init Command.
- * `init` creates (or overrides) configuration in
- * the cwd with an interactive prompt. */
-export async function init(options: Options) {
+/**
+ * Init Command.
+ *
+ * `init` creates (or overrides) config in the cwd with interactive prompt.
+ */
+export async function init(option: void | Options) {
+  const options: Options = {
+    ...initCommand.getGlobalOptions(true),
+    ...option
+  };
+
   await setupLog(options.debug);
 
   let currentConfig: Partial<Config> = {};
@@ -175,7 +181,7 @@ export async function init(options: Options) {
   });
 
   const config: Partial<Config> = {
-    $schema: `https://x.nest.land/eggy@${eggsVersion}/src/schema.json`,
+    $schema: `https://x.nest.land/eggs@0.3.10/src/schema.json`,
     name,
     entry,
     description,
@@ -205,13 +211,6 @@ export type Arguments = [];
 export const initCommand = new Command()
   .version(eggsVersion)
   .description("Initiates a new module for the nest.land registry.")
-  .type("LogLevel", logLevelType, { global: true, override: true })
-  .option(
-    "-L, --log-level <level:LogLevel>",
-    "Set log level (possible values: debug, info)",
-    { default: "info" as unknown as LogLevelNames },
-  )
-  .option("-q, --quiet", "Suppress diagnostic output", { default: false })
   .action(init);
 
 export default initCommand;

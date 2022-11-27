@@ -1,8 +1,9 @@
 import {
   bold,
   brightGreen,
-  brightRed,
+  yellow,
   Command,
+  Confirm,
   DenoLand,
   log,
   semver,
@@ -17,7 +18,7 @@ export type Arguments = [];
 
 export const upgradeCommand = new Command()
   .version(version)
-  .description("Upgrade the eggs CLI to the latest available version.")
+  .description("Upgrade the CLI to the latest version.")
   .action(upgrade);
 
 export async function upgrade(option: void | Options) {
@@ -32,22 +33,23 @@ export async function upgrade(option: void | Options) {
   // registry for updates to the CLI (we're using DenoLand for now).
   // It's also published to nest.land under the name 'eggy'.
   const newVersion = await DenoLand.latestVersion("eggs");
+
   if (!newVersion) {
     log.error("Could not retrieve latest version.");
     return;
   }
+
   if (semver.lte(newVersion, version)) {
     log.info("You are already using the latest CLI version!");
     return;
   }
 
-  const shouldUpgrade = confirm(
-    `${bold("New version of eggs is available!")} ${brightRed(version)} → ${
-      bold(brightGreen(newVersion))
-    }\n\nContinue with installing the new version?`,
-  );
+  const confirmation: boolean = await Confirm.prompt({
+    message: `${bold("🥚 New version of eggs is available!")} ${yellow(version)} → ${bold(brightGreen(newVersion))}\n\nContinue with install?`,
+    default: true,
+  });
 
-  if (!shouldUpgrade) {
+  if (!confirmation) {
     return;
   }
 
@@ -57,7 +59,7 @@ export async function upgrade(option: void | Options) {
       "install",
       "--unstable",
       "-Afq",
-      `https://deno.land/x/eggs@${newVersion}/cli.ts`,
+      `https://deno.land/x/eggs@${newVersion}/eggs.ts`,
     ],
     stdout: "piped",
     stderr: "piped",

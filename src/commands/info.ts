@@ -73,7 +73,7 @@ export async function info(options: Options, file?: string) {
     }
   } else {
     const info = Deno.run({
-      cmd: ["deno", "info"],
+      cmd: ["deno", "info", "--unstable"],
       stderr: "inherit",
       stdout: "inherit",
     });
@@ -145,6 +145,8 @@ function beautifyDependency(dep: string) {
         }`;
 
       case "raw.githubusercontent.com":
+      case "raw.github.com":
+      case "github.com":
         return `${format.github} ${bold(`${owner}/${name}`)} ${
           formatVersion(version)
         } ${formatPath(relativePath)}`;

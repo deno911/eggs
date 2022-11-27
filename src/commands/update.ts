@@ -1,23 +1,28 @@
 import {
+  basename,
   Command,
+  Confirm,
   green,
   latestVersion,
   log,
   parseURL,
   semver,
+  underline,
   versionSubstitute,
   yellow,
 } from "../../deps.ts";
 import { version } from "../version.ts";
-import type { DefaultOptions } from "../commands.ts";
+import { defaultOptions, type DefaultOptions } from "../commands.ts";
 import { setupLog } from "../utilities/log.ts";
 
 /** What the constructed dependency objects should contain */
-interface ModuleToUpdate {
+export interface ModuleToUpdate {
   line: string;
   versionURL: string;
   latestRelease: string;
 }
+
+const COMMENT_REGEX = /^(?:(?![/][*]+| *[*] *|[/]{2,3}).+)/mdg;
 
 export async function update(
   options: Options,
@@ -26,6 +31,8 @@ export async function update(
   const requestedModules = (
     Array.isArray(deps) ? deps : Object.values(deps ?? {})
   ) ?? [];
+
+  options = { ...defaultOptions, ...(options ?? {}) };
 
   await setupLog(options.debug);
 
@@ -43,24 +50,26 @@ export async function update(
     return;
   }
 
-  const doubleCheck = confirm(
-    `This will overwrite existing versions in ${
-      pathToDepFile.split("/").at(-1)
-    }. Should we proceed?`,
-  );
+  const confirmation = Confirm.prompt({
+    message: `This will overwrite existing dependency versions in ${underline(basename(pathToDepFile))}.\n\nShould we proceed with updating?`,
+    default: true,
+  });
 
-  if (!doubleCheck) {
-    log.warning(
-      "Aborted the dependency update process.",
-    );
+  if (!confirmation) {
+    log.warning("Aborted the dependency update process.");
     return;
   }
 
-  /** Creates an array of strings from each line inside the dependency file.
-   * Only extracts lines that contain "https://" to strip out non-import lines. */
+  /**
+   * Creates an array of strings from each line inside the dependency file.
+   * Only extracts lines that contain "https://" to strip out non-import lines.
+   * Also filters out any lines beginning with a comment delimiter, to ensure
+   * we're only updating actual dependencies and not documentation/example URLs.
+   */
   const dependencyFileContents: string[] = (
     await Deno.readTextFile(pathToDepFile)
-  ).split(/[\r\n]/).filter((line) => line.indexOf("https://") > 0);
+  ).split(/[\r\n]/).filter((line) => (line.indexOf("https://") > 0 &&
+    !COMMENT_REGEX.test(line)));
 
   if (dependencyFileContents?.length === 0) {
     log.warning(

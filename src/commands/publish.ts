@@ -1,23 +1,24 @@
 import {
-  basename,
+  $,
   bold,
   Command,
   Confirm,
-  dependencyTree,
   dim,
-  dirname,
-  existsSync,
   globToRegExp,
   gray,
   green,
   isVersionUnstable,
   italic,
-  join,
   log,
   normalizePath,
+  prettyBytes,
   relative,
   semver,
   underline,
+  // basename,
+  // dependencyTree,
+  // dirname,
+  // join,
 } from "../../deps.ts";
 import type { DefaultOptions } from "../commands.ts";
 import { releaseType, urlType, versionType } from "../utilities/types.ts";
@@ -80,12 +81,12 @@ function ensureCompleteConfig(
 
 function normalize(path: string) {
   path = relative(Deno.cwd(), path).replace(/\\/g, "/");
-
-  return `./${normalizePath(path).replace(/^\.\/|\//g, "")}`;
+  path = path.replace(/^\.\//g, "").replace(/^\/+/g, "");
+  return `./${normalizePath(path)}`;
 }
 
 function ensureFiles(config: Config, matched: MatchedFile[]): boolean {
-  if (!existsSync("README.md")) {
+  if (!$.existsSync("README.md")) {
     log.warning("No README found at project root, continuing without one...");
   }
 
@@ -198,7 +199,7 @@ async function checkUp(
     if (status.success) {
       log.info("Tests passed successfully.");
     } else {
-      if (stdout.match(/^No matching test modules found/)) {
+      if (stdout.match(/No test modules found/)) {
         log.info("No matching test modules found, tests skipped.");
       } else {
         log.error("Some tests were not successful.");
@@ -210,39 +211,46 @@ async function checkUp(
   }
 
   // Test disabled: analyzer is still unstable
-  if (config.checkInstallation ?? config.check) {
-    const wait = spinner.info("Test installation...");
-    const tempDir = await Deno.makeTempDir();
-    for (let i = 0; i < matched.length; i++) {
-      const file = matched[i];
-      const dir = join(tempDir, dirname(file.path));
-      try {
-        await Deno.mkdir(dir, { recursive: true });
-      } catch (err) {
-        if (!(err instanceof Deno.errors.AlreadyExists)) {
-          throw err;
-        }
-      }
-      await Deno.copyFile(file.fullPath, join(tempDir, file.path));
-    }
-    const entry = join(tempDir, config.entry);
-    const deps = await dependencyTree(entry);
-    await Deno.remove(tempDir, { recursive: true });
-    wait.stop();
-    if (deps.errors.length === 0) {
-      log.info("No errors detected when installing the module.");
-    } else {
-      log.error(
-        "Some files could not be resolved during the test installation. They are probably missing, you should include them.",
-      );
-      for (let i = 0; i < deps.errors.length; i++) {
-        const [path, error] = deps.errors[i];
-        const relativePath = path.split(basename(tempDir))[1] || path;
-        log.error(`${bold(relativePath)} : ${error}`);
-      }
-      return false;
-    }
-  }
+  // if (config.checkInstallation ?? config.check) {
+  //   const wait = spinner.info("Test installation...");
+  //   const tempDir = await Deno.makeTempDir();
+
+  //   for (let i = 0; i < matched.length; i++) {
+  //     const file = matched[i];
+  //     const dir = join(tempDir, dirname(file.path));
+
+  //     try {
+  //       await Deno.mkdir(dir, { recursive: true });
+  //     } catch (err) {
+  //       if (!(err instanceof Deno.errors.AlreadyExists)) {
+  //         throw err;
+  //       }
+  //     }
+
+  //     await Deno.copyFile(file.fullPath, join(tempDir, file.path));
+  //   }
+
+  //   const entry = join(tempDir, config.entry);
+  //   const deps = await dependencyTree(entry);
+
+  //   await Deno.remove(tempDir, { recursive: true });
+
+  //   wait.stop();
+
+  //   if (deps.errors.length === 0) {
+  //     log.info("No errors detected when installing the module.");
+  //   } else {
+  //     log.error(
+  //       "Some files could not be resolved during the test installation. They are probably missing, you should include them.",
+  //     );
+  //     for (let i = 0; i < deps.errors.length; i++) {
+  //       const [path, error] = deps.errors[i];
+  //       const relativePath = path.split(basename(tempDir))[1] || path;
+  //       log.error(`${bold(relativePath)} : ${error}`);
+  //     }
+  //     return false;
+  //   }
+  // }
 
   return true;
 }
@@ -261,7 +269,9 @@ export async function publish(options: Options, name: unknown) {
   }
 
   const [gatheredContext, contextIgnore] = await gatherContext();
+
   log.debug("Options:", options);
+
   const gatheredOptions = gatherOptions(options, name as string);
   if (!gatheredContext || !gatheredOptions) return;
 
@@ -281,6 +291,7 @@ export async function publish(options: Options, name: unknown) {
 
   const matched = matchFiles(egg, ignore);
   if (!matched) return;
+
   const matchedContent = readFiles(matched);
 
   log.debug("Matched files:", matched);
@@ -294,6 +305,7 @@ export async function publish(options: Options, name: unknown) {
   const existing = await fetchModule(egg.name);
 
   let latest = "0.0.0";
+
   if (existing) {
     latest = existing.getLatestVersion();
     egg.description = egg.description || existing.description;
@@ -347,12 +359,26 @@ export async function publish(options: Options, name: unknown) {
   const filesToPublish = matched.reduce(
     (previous, current) => {
       return `${previous}\n        - ${dim(current.path)}  ${
-        gray(dim("(" + (current.lstat.size / 1000000).toString() + "MB)"))
+        gray(
+          dim(
+            `(${
+              prettyBytes(current.lstat.size, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 2,
+              })
+            })`,
+          ),
+        )
       }`;
     },
     "Files to publish:",
   );
+
   log.info(filesToPublish);
+
+  if (options.dryRun) {
+    return;
+  }
 
   if (!options.yes) {
     const confirmation: boolean = await Confirm.prompt({
@@ -364,10 +390,6 @@ export async function publish(options: Options, name: unknown) {
       log.info("Publish cancelled.");
       return;
     }
-  }
-
-  if (options.dryRun) {
-    return;
   }
 
   const uploadResponse = await postPublishModule(apiKey, module);

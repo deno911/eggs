@@ -6,15 +6,10 @@ import {
   italic,
   underline,
 } from "../../deps.ts";
-import type { DefaultOptions } from "../commands.ts";
+import { defaultOptions, type DefaultOptions } from "../commands.ts";
 import { version } from "../version.ts";
 import { setupLog } from "../utilities/log.ts";
-import { LogLevelNames, logLevelType, urlType } from "../utilities/types.ts";
-
-const defaultOptions: DefaultOptions = {
-  debug: false,
-  outputLog: true,
-};
+import { urlType } from "../utilities/types.ts";
 
 export async function install(
   options?: Options & DefaultOptions,
@@ -54,9 +49,9 @@ ${
   eggs install -A -n serve https://x.nest.land/std/http/file_server.ts
 
 ${bold("The name is inferred by default, with the following logic:")}
-  1. Attempt to take the file stem of the URL path. 
+  1. Attempt to take the file stem of the URL path.
      The above example would become 'file_server'.
-  2. If the file stem is something generic like 'main', 
+  2. If the file stem is something generic like 'main',
      'mod', 'index' or 'cli', ${bold("and")} the path has no parent,
      use the ${italic("filename of the parent path")}. Otherwise
      settle with the generic name.
@@ -87,7 +82,6 @@ export type Arguments = [string[]];
 export const installCommand = new Command()
   .version(version)
   .description(desc)
-  .type("LogLevel", logLevelType, { global: true, override: true })
   .type("URL", urlType, { global: true, override: true })
   .arguments("[url:URL]")
   .option("--root <root>", "Installation root", { default: null })
@@ -124,12 +118,6 @@ export const installCommand = new Command()
   .option("--cert <FILE>", "Load certificate authority from PEM encoded file", {
     default: null,
   })
-  .option(
-    "-L, --log-level <level:LogLevel>",
-    "Set log level (possible values: debug, info)",
-    { default: "info" as unknown as LogLevelNames },
-  )
-  .option("-q, --quiet", "Suppress diagnostic output", { default: false })
   /** Unknown options cannot be parsed */
   .action(install)
   .useRawArgs();
