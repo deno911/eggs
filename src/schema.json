@@ -1,36 +1,48 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "nestdotland/eggs.json",
+  "$id": "https://deno.land/x/eggs@0.3.40/src/schema.json",
   "properties": {
     "name": {
       "description": "The name of your module/repository.",
-      "type": ["string"],
-      "examples": ["my-module"]
+      "type": [
+        "string"
+      ],
+      "examples": [
+        "eggs"
+      ]
     },
     "description": {
-      "description": "Your module/repository description.",
+      "description": "Your module description.",
       "type": "string",
-      "examples": ["This is the description of my repository"]
+      "examples": [
+        "User-friendly Command Line Interface for publishing stuff."
+      ]
     },
     "version": {
       "type": "string",
-      "description": "Current version of your module. Must follow semver.",
-      "examples": ["0.0.1"]
+      "description": "Current module version, conforming to the Semantic Versioning 2.0 specification.",
+      "examples": [
+        "0.0.1"
+      ]
     },
     "bump": {
       "type": "string",
-      "description": "Increment the version by release type. See https://docs.nest.land/eggs/configuration.html#field-information.",
-      "examples": ["patch"]
+      "description": "Set the SemVer release type to auto-increment the version with. On each new release the existing version will be bumped by this amount. See https://docs.nest.land/eggs/configuration.html#field-information",
+      "examples": [
+        "patch"
+      ]
     },
     "entry": {
       "type": "string",
-      "description": "The index file of your project. This is what users will see when they try to import your module from our registry! Defaults to ./mod.ts.",
+      "description": "The main entry point of your project, sometimes referred to as the 'default module'. This is what users will see when viewing the module in the gallery! Defaults to ./mod.ts.",
       "default": "./mod.ts"
     },
     "unstable": {
       "type": "boolean",
       "description": "Is this version unstable?. Default value is determined by Semantic Versioning rules.",
-      "examples": [false]
+      "examples": [
+        false
+      ]
     },
     "unlisted": {
       "type": "boolean",
@@ -48,7 +60,11 @@
         "type": "string"
       },
       "description": "All the files that should be uploaded to nest.land. Supports file globbing. Do not use ./**/* for the files field! This has been known to cause errors in the publishing process.",
-      "examples": [["src/**/*"]]
+      "examples": [
+        [
+          "src/**/*"
+        ]
+      ]
     },
     "ignore": {
       "type": "array",
@@ -56,15 +72,25 @@
         "type": "string"
       },
       "description": "All the files that should be ignored when uploading to nest.land. Supports file globbing.",
-      "examples": [["tests/**/*"]]
+      "examples": [
+        [
+          "tests/**/*"
+        ]
+      ]
     },
     "checkFormat": {
-      "type": ["boolean", "string"],
+      "type": [
+        "boolean",
+        "string"
+      ],
       "description": "Automatically format your code before publishing to the blockchain. Defaults to false",
       "default": false
     },
     "checkTests": {
-      "type": ["boolean", "string"],
+      "type": [
+        "boolean",
+        "string"
+      ],
       "description": "Run deno test. Defaults to false.",
       "default": false
     },
