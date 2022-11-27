@@ -33,11 +33,15 @@
   - [`land` · zero install](#land--zero-install)
 - [**Commands**](#commands)
   - [`completions`](#completions)
+    - [bash](#bash)
+    - [fish](#fish)
+    - [zsh](#zsh)
   - [`link`](#link)
   - [`init`](#init)
   - [`install`](#install)
   - [`publish`](#publish)
   - [`update`](#update)
+    - [Supported Registries](#supported-registries)
   - [`upgrade`](#upgrade)
 - [**Contributing**](#contributing)
 
@@ -49,13 +53,13 @@ For more information on the Nest.land Registry, see the
 ### `deno.land`
 
 ```bash
-deno install -Afq --unstable https://deno.land/eggs@0.3.32/cli.ts
+deno install -Afq --unstable https://deno.land/x/eggs/cli.ts
 ```
 
 ### `nest.land`
 
 ```bash
-deno install -Afq --unstable https://x.nest.land/eggy@0.3.32/cli.ts
+deno install -Afq --unstable https://x.nest.land/eggy@0.3.40/cli.ts
 ```
 
 **Warning**: You need to upgrade to Deno v1.25 or newer in order to use this
