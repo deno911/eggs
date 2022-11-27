@@ -6,15 +6,11 @@
 /// <reference lib="deno.unstable" />
 
 // deno-lint-ignore-file
-import {
-  DenoLand,
-  log,
-  UpdateNotifier,
-} from "./deps.ts";
+import { DenoLand, log, UpdateNotifier } from "./deps.ts";
 import {
   Command,
-  type DefaultOptions,
   completions,
+  type DefaultOptions,
   help,
   info,
   init,
@@ -64,18 +60,21 @@ const eggs = new Command()
     "🥚 nest.land - module registry and CDN for Deno, on the permaweb",
   )
   .type("LogLevel", logLevelType, { global: true })
-  .option("-D, --debug",
-          "Print additional information.",
-          { global: true })
-  .option("-o, --output-log",
-          "Create a log file after execution.",
-          { global: true })
-  .option("-L, --log-level <level:LogLevel>",
-          `Set log level.\n`,
-          { global: true, default: "info" as unknown as LogLevelNames })
-  .option("-q, --quiet", "Suppress diagnostic output",
-          { global: true, default: false })
-  .action(() => { eggs.showHelp() });
+  .option("-D, --debug", "Print additional information.", { global: true })
+  .option("-o, --output-log", "Create a log file after execution.", {
+    global: true,
+  })
+  .option("-L, --log-level <level:LogLevel>", `Set log level.\n`, {
+    global: true,
+    default: "info" as unknown as LogLevelNames,
+  })
+  .option("-q, --quiet", "Suppress diagnostic output", {
+    global: true,
+    default: false,
+  })
+  .action(() => {
+    eggs.showHelp();
+  });
 
 export type CommandName = keyof typeof commands;
 

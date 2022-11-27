@@ -12,7 +12,7 @@ import {
   yellow,
 } from "../../deps.ts";
 import { version } from "../version.ts";
-import { defaultOptions, type DefaultOptions } from "../commands.ts";
+import { type DefaultOptions, defaultOptions } from "../commands.ts";
 import { setupLog } from "../utilities/log.ts";
 
 /** What the constructed dependency objects should contain */
@@ -51,7 +51,9 @@ export async function update(
   }
 
   const confirmation = Confirm.prompt({
-    message: `This will overwrite existing dependency versions in ${underline(basename(pathToDepFile))}.\n\nShould we proceed with updating?`,
+    message: `This will overwrite existing dependency versions in ${
+      underline(basename(pathToDepFile))
+    }.\n\nShould we proceed with updating?`,
     default: true,
   });
 
@@ -69,7 +71,8 @@ export async function update(
   const dependencyFileContents: string[] = (
     await Deno.readTextFile(pathToDepFile)
   ).split(/[\r\n]/).filter((line) => (line.indexOf("https://") > 0 &&
-    !COMMENT_REGEX.test(line)));
+    !COMMENT_REGEX.test(line))
+  );
 
   if (dependencyFileContents?.length === 0) {
     log.warning(

@@ -30,7 +30,7 @@ import { setupLog } from "../utilities/log.ts";
 export async function init(option: void | Options) {
   const options: Options = {
     ...initCommand.getGlobalOptions(true),
-    ...option
+    ...option,
   };
 
   await setupLog(options.debug);

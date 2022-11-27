@@ -6,7 +6,7 @@ import {
   italic,
   underline,
 } from "../../deps.ts";
-import { defaultOptions, type DefaultOptions } from "../commands.ts";
+import { type DefaultOptions, defaultOptions } from "../commands.ts";
 import { version } from "../version.ts";
 import { setupLog } from "../utilities/log.ts";
 import { urlType } from "../utilities/types.ts";

@@ -10,7 +10,7 @@ import { setupLog } from "../utilities/log.ts";
  * the API key to. */
 export async function link(option: void | Options, key: string) {
   const options = {
-    debug: linkCommand.getGlobalOption('debug'),
+    debug: linkCommand.getGlobalOption("debug"),
     ...(option || {}),
   } as Options;
   await setupLog(options.debug);

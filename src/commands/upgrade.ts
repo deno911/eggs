@@ -1,19 +1,19 @@
 import {
   bold,
   brightGreen,
-  yellow,
   Command,
   Confirm,
   DenoLand,
   log,
   semver,
+  yellow,
 } from "../../deps.ts";
 import type { DefaultOptions } from "../commands.ts";
 
 import { version } from "../version.ts";
 import { setupLog } from "../utilities/log.ts";
 
-export type Options = (DefaultOptions & Record<string, unknown>);
+export type Options = DefaultOptions & Record<string, unknown>;
 export type Arguments = [];
 
 export const upgradeCommand = new Command()
@@ -23,8 +23,8 @@ export const upgradeCommand = new Command()
 
 export async function upgrade(option: void | Options) {
   const options = {
-    debug: upgradeCommand.getOption('debug'),
-    ...(typeof option === "object" ? option : {})
+    debug: upgradeCommand.getOption("debug"),
+    ...(typeof option === "object" ? option : {}),
   } as Options;
 
   await setupLog(options.debug);
@@ -45,7 +45,9 @@ export async function upgrade(option: void | Options) {
   }
 
   const confirmation: boolean = await Confirm.prompt({
-    message: `${bold("🥚 New version of eggs is available!")} ${yellow(version)} → ${bold(brightGreen(newVersion))}\n\nContinue with install?`,
+    message: `${bold("🥚 New version of eggs is available!")} ${
+      yellow(version)
+    } → ${bold(brightGreen(newVersion))}\n\nContinue with install?`,
     default: true,
   });
 
