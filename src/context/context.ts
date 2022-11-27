@@ -12,7 +12,7 @@ export async function gatherContext(
     denies: [],
     extends: [],
   };
-  const configPath = await defaultConfig(wd);
+  const configPath = defaultConfig(wd);
 
   if (configPath) {
     try {

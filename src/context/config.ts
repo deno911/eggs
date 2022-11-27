@@ -1,6 +1,6 @@
 import {
+  $,
   type EggJson,
-  exists,
   extname,
   join,
   JSONC,
@@ -13,6 +13,9 @@ import { writeJson } from "../utilities/json.ts";
 export enum ConfigFormat {
   YAML = "yml",
   JSON = "json",
+  JSONC = "jsonc",
+  JSON5 = "json5",
+  TOML = "toml",
 }
 
 /** Configuration options.
@@ -52,11 +55,11 @@ const DEFAULT_CONFIGS = [
 ];
 
 /** Get default config in cwd. */
-export async function defaultConfig(
+export function defaultConfig(
   wd: string = Deno.cwd(),
-): Promise<string | undefined> {
+): string | undefined {
   for (const path of DEFAULT_CONFIGS) {
-    if (await exists(join(wd, path))) return path;
+    if ($.existsSync(join(wd, path))) return path;
   }
 }
 
@@ -64,7 +67,9 @@ export async function defaultConfig(
  * @param path configuration file path */
 export function configFormat(path: string): ConfigFormat {
   const ext = extname(path);
-  if (/^.ya?ml$/.test(ext)) return ConfigFormat.YAML;
+  if (/^.ya?ml$/.test(ext)) {
+    return ConfigFormat.YAML;
+  }
   return ConfigFormat.JSON;
 }
 

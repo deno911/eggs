@@ -1,4 +1,4 @@
-import { desc, run, sh, task, join } from "./deps.ts";
+import { desc, join, run, sh, task } from "./deps.ts";
 import { version } from "./src/version.ts";
 
 const encoder = new TextEncoder();
@@ -72,7 +72,7 @@ task("setup-github-actions", [], async function () {
     Deno.env.get("USERPROFILE") ?? // for windows
     "/";
   const path = encoder.encode(
-    Deno.env.get("DENO_INSTALL_ROOT") ?? join(home, ".deno", "bin")
+    Deno.env.get("DENO_INSTALL_ROOT") ?? join(home, ".deno", "bin"),
   );
   const GITHUB_PATH = Deno.env.get("GITHUB_PATH");
   if (!GITHUB_PATH) throw new Error("Unable to get Github path");

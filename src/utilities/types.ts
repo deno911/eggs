@@ -2,18 +2,20 @@ import {
   // EggJson,
   EnumType,
   ITypeInfo,
-  LogLevels,
   semver,
 } from "../../deps.ts";
 
 /* cliffy custom command line types */
 
 /** Permitted log level names (type alias) */
-export type LogLevelNames = ["error", "debug", "info", "warning"];
+export type LogLevelNames = "debug" | "info" | "warning";
 
 /** Permitted log level names (constant) */
-export const LogLevelNames = Object.keys(LogLevels)
-  .filter((k) => isNaN(Number(k))) as LogLevelNames;
+export const LogLevelNames: LogLevelNames[] = [
+  "debug",
+  "info",
+  "warning",
+];
 
 /** Permitted log level names (cliffy enumtype) */
 export const logLevelType = new EnumType(LogLevelNames);
