@@ -10,15 +10,15 @@ export {
   type LogMode,
   type LogRecord,
   setup,
-} from "https://deno.land/std@0.160.0/log/mod.ts";
-export * as log from "https://deno.land/std@0.160.0/log/mod.ts";
-export { BaseHandler } from "https://deno.land/std@0.160.0/log/handlers.ts";
-export * from "https://deno.land/std@0.160.0/fmt/colors.ts";
-export * from "https://deno.land/std@0.160.0/testing/asserts.ts";
+} from "https://deno.land/std@0.166.0/log/mod.ts";
+export * as log from "https://deno.land/std@0.166.0/log/mod.ts";
+export { BaseHandler } from "https://deno.land/std@0.166.0/log/handlers.ts";
+export * from "https://deno.land/std@0.166.0/fmt/colors.ts";
+export * from "https://deno.land/std@0.166.0/testing/asserts.ts";
 
 export * from "https://deno.land/x/drake@v1.6.0/mod.ts";
 
-export { prettyBytes } from "https://deno.land/std@0.160.0/fmt/bytes.ts";
+export { prettyBytes } from "https://deno.land/std@0.166.0/fmt/bytes.ts";
 
 export { default as $ } from "https://deno.land/x/dax@0.15.0/mod.ts";
 
@@ -33,7 +33,7 @@ export {
   normalize as normalizePath,
   relative,
   resolve,
-} from "https://deno.land/std@0.160.0/path/mod.ts";
+} from "https://deno.land/std@0.166.0/path/mod.ts";
 
 export {
   exists,
@@ -42,30 +42,30 @@ export {
   expandGlobSync,
   walk,
   walkSync,
-} from "https://deno.land/std@0.160.0/fs/mod.ts";
+} from "https://deno.land/std@0.166.0/fs/mod.ts";
 
 export {
   parse as parseYaml,
   stringify as stringifyYaml,
-} from "https://deno.land/std@0.160.0/encoding/yaml.ts";
+} from "https://deno.land/std@0.166.0/encoding/yaml.ts";
 
 export * from "https://deno.land/x/typedefs@0.0.1/egg-json.d.ts";
 
-export * as YAML from "https://deno.land/std@0.160.0/encoding/yaml.ts";
+export * as YAML from "https://deno.land/std@0.166.0/encoding/yaml.ts";
 
-export * as JSONC from "https://deno.land/std@0.160.0/encoding/jsonc.ts";
+export * as JSONC from "https://deno.land/std@0.166.0/encoding/jsonc.ts";
 
-export * as TOML from "https://deno.land/std@0.160.0/encoding/toml.ts";
+export * as TOML from "https://deno.land/std@0.166.0/encoding/toml.ts";
 
 export * from "https://deno.land/x/cliffy/command/mod.ts";
 
 export {
   string as stringType,
-} from "https://deno.land/x/cliffy@v0.25.2/flags/types/string.ts";
+} from "https://deno.land/x/cliffy@v0.25.4/flags/types/string.ts";
 
-export * from "https://deno.land/x/cliffy@v0.25.2/prompt/mod.ts";
+export * from "https://deno.land/x/cliffy@v0.25.4/prompt/mod.ts";
 
-export * from "https://deno.land/x/cliffy@v0.25.2/flags/types.ts";
+export * from "https://deno.land/x/cliffy@v0.25.4/flags/types.ts";
 
 export * as semver from "https://deno.land/x/semver@v1.4.1/mod.ts";
 
