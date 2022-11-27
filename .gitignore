@@ -31,3 +31,4 @@ node_modules
 __deno_lock__
 *.lock
 deno.lock
+.githooks
