@@ -1,3 +1,8 @@
+/// <reference lib="dom" />
+/// <reference lib="dom.extras" />
+/// <reference lib="es2018.regexp" />
+/// <reference lib="deno.unstable" />
+
 import {
   basename,
   Command,
@@ -50,13 +55,12 @@ export async function update(
     return;
   }
 
-  const confirmation = Confirm.prompt({
+  const confirmation = await Confirm.prompt({
     message: `This will overwrite existing dependency versions in ${
       underline(basename(pathToDepFile))
     }.\n\nShould we proceed with updating?`,
     default: true,
   });
-
   if (!confirmation) {
     log.warning("Aborted the dependency update process.");
     return;
@@ -68,11 +72,16 @@ export async function update(
    * Also filters out any lines beginning with a comment delimiter, to ensure
    * we're only updating actual dependencies and not documentation/example URLs.
    */
-  const dependencyFileContents: string[] = (
-    await Deno.readTextFile(pathToDepFile)
-  ).split(/[\r\n]/).filter((line) => (line.indexOf("https://") > 0 &&
-    !COMMENT_REGEX.test(line))
-  );
+  const dependencyFileContents: string[] = Deno.readTextFileSync(pathToDepFile)
+    .replaceAll(
+      /\r\n/g,
+      "\n",
+    ).split(/\n/).filter((line) => line.trim())
+    .filter((line) => line.indexOf("http") > -1).filter((line) =>
+      !line.startsWith("//") &&
+      !((line.startsWith("/*") || line.startsWith(" *")) &&
+        !line.includes("*/"))
+    );
 
   if (dependencyFileContents?.length === 0) {
     log.warning(
@@ -83,11 +92,12 @@ export async function update(
 
   log.debug("Dependency file contents: ", dependencyFileContents);
 
-  /** For each import line in the users dependency file, collate the data ready
+  /**
+   * For each import line in the users dependency file, collate the data ready
    * to be re-written if it can be updated.
    * Skips the dependency if it is not versioned (no need to try to update it) */
   const dependenciesToUpdate: Array<ModuleToUpdate> = [];
-  for (const line of dependencyFileContents) {
+  for await (const line of dependencyFileContents) {
     const { name, parsedURL, registry, owner, version } = parseURL(line);
 
     // TODO(@qu4k): edge case: dependency isn't a module, for example: from
@@ -102,15 +112,15 @@ export async function update(
       continue;
     }
 
-    // Get latest release
-    const latestRelease = await latestVersion(registry, name, owner);
-
     // Basic safety net
 
     if (!version || !semver.valid(version)) {
       log.debug("Invalid version", name, version);
       continue;
     }
+
+    // Get latest release
+    const latestRelease = await latestVersion(registry, name, owner);
 
     if (!latestRelease || !semver.valid(latestRelease)) {
       log.warning(
@@ -119,7 +129,7 @@ export async function update(
       continue;
     }
 
-    if (semver.gte(version, latestRelease)) {
+    if (version && semver.gte(version, latestRelease)) {
       log.debug(name, "is already up to date!");
       continue;
     }
@@ -131,14 +141,16 @@ export async function update(
       latestRelease,
     });
 
-    log.info(`${name} ${yellow(version)} → ${green(latestRelease)}`);
+    log.info(
+      `${name} ${yellow(version ?? "none")} → ${green(latestRelease)}`,
+    );
   }
 
-  // If no modules are needed to update then exit
-  if (dependenciesToUpdate.length === 0) {
-    log.info("Your dependencies are already up to date!");
-    return;
-  }
+  // // If no modules are needed to update then exit
+  // if (dependenciesToUpdate.length === 0) {
+  //   log.info("Your dependencies are already up to date!");
+  //   return;
+  // }
 
   // Loop through the users dependency file, replacing the imported version with the latest release for each dep
   let dependencyFile = await Deno.readTextFile(pathToDepFile);
@@ -149,9 +161,9 @@ export async function update(
       dependency.latestRelease,
     );
     const check = async (url: string) =>
-      await fetch(url.replace(/^.*?["']([^'"]+)['"].*?$/ig, "$1")).then((r) =>
-        r.ok
-      ).catch(() => false);
+      await fetch(url.replace(/^.*?["']([^'"]+)['"].*?$/ig, "$1")).then((
+        r,
+      ) => r.ok).catch(() => false);
 
     if (!(await check(newURL))) {
       const newURL2 = newURL.replace(
@@ -174,10 +186,7 @@ export async function update(
   }
 
   // Re-write the file
-  Deno.writeFileSync(
-    pathToDepFile,
-    new TextEncoder().encode(dependencyFile),
-  );
+  await Deno.writeTextFile(pathToDepFile, dependencyFile);
 
   log.info("Updated your dependencies!");
 }
@@ -190,7 +199,7 @@ export type Arguments = [string[]];
 export const updateCommand = new Command()
   .description("Update your dependencies")
   .version(version)
-  .arguments("[...deps: string]")
+  .arguments("[...deps]")
   .option(
     "--file <file:string>",
     "Set dependency filename",
