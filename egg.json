@@ -5,7 +5,7 @@
   "description": "Unofficial fork of the CLI used to publish and update modules on nest.land. Fixed for Deno 1.25+",
   "homepage": "https://github.com/deno911/eggs",
   "repository": "https://github.com/deno911/eggs",
-  "version": "0.3.40",
+  "version": "0.3.50",
   "releaseType": false,
   "bump": false,
   "unstable": true,
